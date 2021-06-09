@@ -1,10 +1,9 @@
 using Masarin.IoT.Sensor.Messages;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using System;
-using System.Buffers.Binary;
 using System.Text;
 using Fiware;
+using System.Linq;
 
 namespace Masarin.IoT.Sensor
 
@@ -63,6 +62,25 @@ namespace Masarin.IoT.Sensor
                     Console.WriteLine($"No \"externalTemperature\" property in message from deviceName {deviceName}!: {json}");
                     return;
                 }
+            }
+            else if (deviceName.Contains("sn-tcr-01"))
+            {
+                if (obj.ContainsKey("L0_CNT")) {
+                    int[] arr = new int[8] {obj.L0_CNT, obj.L1_CNT, obj.L2_CNT, obj.L3_CNT, obj.R0_CNT, obj.R1_CNT, obj.R2_CNT, obj.R3_CNT};
+
+                    int totalCount = arr.Sum();
+                    
+                    string stringValue = $"i%3D{totalCount}";
+                    
+                    var message = new Fiware.DeviceMessage(deviceName, stringValue);
+
+                    _fiwareContextBroker.PostMessage(message); 
+                }
+                else
+                {
+                    Console.WriteLine($"No \"L0_CNT\" property in message from deviceName {deviceName}!: {json}");
+                    return;
+                }  
             }
 
             Console.WriteLine($"Got message from deviceName {deviceName}: {json}");
