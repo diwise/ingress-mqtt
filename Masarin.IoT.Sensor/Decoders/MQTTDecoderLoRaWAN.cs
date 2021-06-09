@@ -80,7 +80,22 @@ namespace Masarin.IoT.Sensor
                 {
                     Console.WriteLine($"No \"L0_CNT\" property in message from deviceName {deviceName}!: {json}");
                     return;
-                }  
+                }
+            }
+            else if (deviceName.Contains("mcg-ers-co2-"))
+            {
+                if (obj.ContainsKey("co2"))
+                {
+                    double value = obj.co2;
+                    var strValue = $"co2%3D{value}";
+                    var msg = new Fiware.DeviceMessage(deviceName, strValue);
+                    _fiwareContextBroker.PostMessage(msg);
+                }
+                else
+                {
+                    Console.WriteLine($"No \"co2\" property in message from deviceName {deviceName}!: {json}");
+                    return;
+                }
             }
 
             Console.WriteLine($"Got message from deviceName {deviceName}: {json}");
