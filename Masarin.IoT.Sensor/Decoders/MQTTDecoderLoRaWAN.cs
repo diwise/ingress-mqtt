@@ -65,16 +65,26 @@ namespace Masarin.IoT.Sensor
             }
             else if (deviceName.Contains("sn-tcr-01"))
             {
-                if (obj.ContainsKey("L0_CNT")) {
-                    int[] arr = new int[8] {obj.L0_CNT, obj.L1_CNT, obj.L2_CNT, obj.L3_CNT, obj.R0_CNT, obj.R1_CNT, obj.R2_CNT, obj.R3_CNT};
+                if (obj.ContainsKey("L0_CNT") && obj.ContainsKey("R0_CNT")) {
+                    int[] leftArr = new int[4] {obj.L0_CNT, obj.L1_CNT, obj.L2_CNT, obj.L3_CNT};
 
-                    int totalCount = arr.Sum();
+                    int totalCountLeft = leftArr.Sum();
                     
-                    string stringValue = $"i%3D{totalCount}";
-                    
-                    var message = new Fiware.DeviceMessage(deviceName, stringValue);
+                    string newId = deviceName.Remove(0,16);
+                    string dateStr = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                    string refRoad = "urn:ngsi-ld:RoadSegment:19312:2860:35243";
 
-                    _fiwareContextBroker.PostMessage(message); 
+                    var leftMessage = new Fiware.TrafficFlowObserved(newId, dateStr, 0, totalCountLeft, refRoad);
+
+                    _fiwareContextBroker.PostNewTrafficFlowObserved(leftMessage);
+
+                    int[] rightArr = new int[4] {obj.L0_CNT, obj.L1_CNT, obj.L2_CNT, obj.L3_CNT};
+
+                    int totalCountRight = rightArr.Sum();
+
+                    var rightMessage = new Fiware.TrafficFlowObserved(newId, dateStr, 0, totalCountRight, refRoad);
+
+                    _fiwareContextBroker.PostNewTrafficFlowObserved(rightMessage); 
                 }
                 else
                 {

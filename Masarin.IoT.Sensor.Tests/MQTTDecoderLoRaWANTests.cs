@@ -34,15 +34,15 @@ namespace Masarin.IoT.Sensor.Tests
         }
 
         [Fact]
-        public void TestThatTrafficFlowMessagePostsWithCorrectValue()
+        public void TestThatTrafficFlowObservedPostsWithCorrectID()
         {
             var contextBroker = new Mock<IContextBrokerProxy>();
             var decoder = new MQTTDecoderLoRaWAN(contextBroker.Object);
-            var payload = "{\"deviceName\":\"sn-tcr-01\",\"devEUI\":\"353438396e399112\",\"data\":\"vgICAAAAAAFPAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\"object\":{\"L0_AVG\":0,\"L0_CNT\":2,\"L1_AVG\":0,\"L1_CNT\":0,\"L2_AVG\":0,\"L2_CNT\":0,\"L3_AVG\":0,\"L3_CNT\":0,\"R0_AVG\":0,\"R0_CNT\":0,\"R1_AVG\":0,\"R1_CNT\":3,\"R2_AVG\":0,\"R2_CNT\":0,\"R3_AVG\":0,\"R3_CNT\":0,\"SBX_BATT\":0,\"SBX_PV\":0,\"TEMP\":33}}";
+            var payload = "{\"deviceName\":\"sn-tcr-01\",\"devEUI\":\"353438396e399112\",\"data\":\"vgICAAAAAAFPAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\"object\":{\"L0_AVG\":0,\"L0_CNT\":2,\"L1_AVG\":0,\"L1_CNT\":4,\"L2_AVG\":0,\"L2_CNT\":3,\"L3_AVG\":0,\"L3_CNT\":1,\"R0_AVG\":0,\"R0_CNT\":2,\"R1_AVG\":0,\"R1_CNT\":3,\"R2_AVG\":0,\"R2_CNT\":0,\"R3_AVG\":0,\"R3_CNT\":0,\"SBX_BATT\":0,\"SBX_PV\":0,\"TEMP\":33}}";
 
             decoder.Decode("2020-08-26T07:11:31Z", "iothub", "out", Encoding.UTF8.GetBytes(payload));
 
-            contextBroker.Verify(foo => foo.PostMessage(It.Is<DeviceMessage>(mo => mo.Value.Value == "i%3D5")));
+            contextBroker.Verify(foo => foo.PostNewTrafficFlowObserved(It.IsAny<TrafficFlowObserved>()));
         }
 
         [Fact]
