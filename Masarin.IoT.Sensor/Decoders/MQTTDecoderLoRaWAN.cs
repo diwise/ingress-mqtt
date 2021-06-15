@@ -82,7 +82,7 @@ namespace Masarin.IoT.Sensor
 
                     int totalCountRight = rightArr.Sum();
 
-                    var rightMessage = new Fiware.TrafficFlowObserved(newId, dateStr, 0, totalCountRight, refRoad);
+                    var rightMessage = new Fiware.TrafficFlowObserved(newId, dateStr, 1, totalCountRight, refRoad);
 
                     _fiwareContextBroker.PostNewTrafficFlowObserved(rightMessage); 
                 }

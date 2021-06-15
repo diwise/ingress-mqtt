@@ -68,7 +68,7 @@ namespace Fiware
             var responseMessage = responseTask.GetAwaiter().GetResult();
             if (!responseMessage.IsSuccessStatusCode)
             {
-                throw new HttpRequestException("Failed to post new entity.");
+                throw new HttpRequestException("Failed to post new entity: " + responseMessage.StatusCode);
             }
         }
     }

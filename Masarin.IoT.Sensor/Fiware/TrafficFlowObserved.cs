@@ -76,7 +76,7 @@ namespace Fiware
         }
     }
 
-        public class NumberPropertyFromDouble
+    public class NumberPropertyFromDouble
     {
         [JsonProperty("type")]
         public string Type { get; set; }
@@ -131,7 +131,7 @@ namespace Fiware
         public GeoPropertyValue(double latitude, double longitude)
         {
             Type = "Point";
-            Coordinates = new double[2] { latitude, longitude };
+            Coordinates = new double[2] { longitude, latitude };
         }
 
     }
