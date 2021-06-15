@@ -35,6 +35,23 @@ namespace Fiware
             Patch(_client, url, data);
         }
 
+        public void PostNewTrafficFlowObserved(TrafficFlowObserved tfo)
+        {
+            var settings = new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                NullValueHandling = NullValueHandling.Ignore
+            };
+
+            var json = JsonConvert.SerializeObject(tfo, settings);
+
+            var data = new StringContent(json, Encoding.UTF8, "application/json+ld");
+
+            var url = $"{_contextBrokerURL}/ngsi-ld/v1/entities/";
+
+            Post(_client, url, data);
+        }
+
         private static void Patch(HttpClient client, string url, StringContent data)
         {
             var responseTask = client.PatchAsync(url, data);
@@ -42,6 +59,16 @@ namespace Fiware
             if (!responseMessage.IsSuccessStatusCode)
             {
                 throw new HttpRequestException("Failed to patch entity attributes.");
+            }
+        }
+
+        private static void Post(HttpClient client, string url, StringContent data)
+        {
+            var responseTask = client.PostAsync(url, data);
+            var responseMessage = responseTask.GetAwaiter().GetResult();
+            if (!responseMessage.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException("Failed to post new entity: " + responseMessage.StatusCode);
             }
         }
     }

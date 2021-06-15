@@ -1,10 +1,9 @@
 using Masarin.IoT.Sensor.Messages;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using System;
-using System.Buffers.Binary;
 using System.Text;
 using Fiware;
+using System.Linq;
 
 namespace Masarin.IoT.Sensor
 
@@ -61,6 +60,35 @@ namespace Masarin.IoT.Sensor
                 else
                 {
                     Console.WriteLine($"No \"externalTemperature\" property in message from deviceName {deviceName}!: {json}");
+                    return;
+                }
+            }
+            else if (deviceName.Contains("sn-tcr-01"))
+            {
+                if (obj.ContainsKey("L0_CNT") && obj.ContainsKey("R0_CNT")) {
+                    int[] leftArr = new int[4] {obj.L0_CNT, obj.L1_CNT, obj.L2_CNT, obj.L3_CNT};
+
+                    int totalCountLeft = leftArr.Sum();
+                    
+                    string newId = deviceName.Remove(0,16);
+                    string dateStr = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                    string refRoad = "urn:ngsi-ld:RoadSegment:19312:2860:35243";
+
+                    var leftMessage = new Fiware.TrafficFlowObserved(newId, dateStr, 0, totalCountLeft, refRoad);
+
+                    _fiwareContextBroker.PostNewTrafficFlowObserved(leftMessage);
+
+                    int[] rightArr = new int[4] {obj.L0_CNT, obj.L1_CNT, obj.L2_CNT, obj.L3_CNT};
+
+                    int totalCountRight = rightArr.Sum();
+
+                    var rightMessage = new Fiware.TrafficFlowObserved(newId, dateStr, 1, totalCountRight, refRoad);
+
+                    _fiwareContextBroker.PostNewTrafficFlowObserved(rightMessage); 
+                }
+                else
+                {
+                    Console.WriteLine($"No \"L0_CNT\" property in message from deviceName {deviceName}!: {json}");
                     return;
                 }
             }
