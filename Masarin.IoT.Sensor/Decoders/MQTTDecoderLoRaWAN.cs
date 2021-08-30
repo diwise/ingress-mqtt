@@ -63,7 +63,7 @@ namespace Masarin.IoT.Sensor
                     return;
                 }
             }
-            else if (deviceName.Contains("sn-tcr-01"))
+            else if (deviceName.Contains("TRSense01"))
             {
                 if (obj.ContainsKey("L0_CNT") && obj.ContainsKey("R0_CNT")) {
                     int[] leftArr = new int[4] {obj.L0_CNT, obj.L1_CNT, obj.L2_CNT, obj.L3_CNT};
@@ -78,7 +78,7 @@ namespace Masarin.IoT.Sensor
 
                     _fiwareContextBroker.PostNewTrafficFlowObserved(leftMessage);
 
-                    int[] rightArr = new int[4] {obj.L0_CNT, obj.L1_CNT, obj.L2_CNT, obj.L3_CNT};
+                    int[] rightArr = new int[4] {obj.R0_CNT, obj.R1_CNT, obj.R2_CNT, obj.R3_CNT};
 
                     int totalCountRight = rightArr.Sum();
 
