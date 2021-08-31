@@ -50,9 +50,9 @@ namespace Fiware
 
     public class DateTimeProperty
     {
-        [JsonProperty("type")]
+        [JsonProperty("@type")]
         public string Type { get; set; }
-        [JsonProperty("value")]
+        [JsonProperty("@value")]
         public string Value { get; set; }
 
         public DateTimeProperty(string value)
