@@ -15,7 +15,7 @@ namespace Fiware
         public string Type { get; set; }
 
         [JsonProperty("dateObserved")]
-        public DateTimeProperty DateObserved { get; set; }
+        public TextProperty DateObserved { get; set; }
 
         [JsonProperty("location")]
         public GeoProperty Location { get; set; }
@@ -40,7 +40,7 @@ namespace Fiware
             Id = "urn:ngsi-ld:TrafficFlowObserved:" + id;
             Type = "TrafficFlowObserved";
             Context = new string[2] { "https://schema.lab.fiware.org/ld/context", "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" };
-            DateObserved = new DateTimeProperty(dateObserved);
+            DateObserved = new TextProperty(dateObserved);
             LaneID = new NumberPropertyFromInt(laneId);
             Intensity = new NumberPropertyFromInt(intensity);
             RefRoadSegment = new TextProperty(refRoad);
