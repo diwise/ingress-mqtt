@@ -68,15 +68,16 @@ namespace Masarin.IoT.Sensor
                 if (obj.ContainsKey("L0_CNT") && obj.ContainsKey("R0_CNT")) {
 
                     string shortDeviceName = deviceName.Remove(0,16);
+                    string dateStr = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
 
-                    ReportTrafficIntensityForLane(shortDeviceName, 0, (int)obj.L0_CNT);
-                    ReportTrafficIntensityForLane(shortDeviceName, 1, (int)obj.L1_CNT);
-                    ReportTrafficIntensityForLane(shortDeviceName, 2, (int)obj.L2_CNT);
-                    ReportTrafficIntensityForLane(shortDeviceName, 3, (int)obj.L3_CNT);
-                    ReportTrafficIntensityForLane(shortDeviceName, 4, (int)obj.R0_CNT);
-                    ReportTrafficIntensityForLane(shortDeviceName, 5, (int)obj.R1_CNT);
-                    ReportTrafficIntensityForLane(shortDeviceName, 6, (int)obj.R2_CNT);
-                    ReportTrafficIntensityForLane(shortDeviceName, 7, (int)obj.R3_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 0, (int)obj.L0_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 1, (int)obj.L1_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 2, (int)obj.L2_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 3, (int)obj.L3_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 4, (int)obj.R0_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 5, (int)obj.R1_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 6, (int)obj.R2_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 7, (int)obj.R3_CNT);
                 }
                 else
                 {
@@ -102,9 +103,8 @@ namespace Masarin.IoT.Sensor
 
             Console.WriteLine($"Got message from deviceName {deviceName}: {json}");
         }
-        private void ReportTrafficIntensityForLane(string deviceName, int lane, int intensity) {
+        private void ReportTrafficIntensityForLane(string deviceName, string dateStr, int lane, int intensity) {
 
-            string dateStr = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
             string refRoad = "urn:ngsi-ld:RoadSegment:19312:2860:35243";
             string shortDeviceName = $"{deviceName}:{lane}:{dateStr}";
             
