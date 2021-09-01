@@ -66,25 +66,67 @@ namespace Masarin.IoT.Sensor
             else if (deviceName.Contains("TRSense01"))
             {
                 if (obj.ContainsKey("L0_CNT") && obj.ContainsKey("R0_CNT")) {
-                    int[] leftArr = new int[4] {obj.L0_CNT, obj.L1_CNT, obj.L2_CNT, obj.L3_CNT};
 
-                    int totalCountLeft = leftArr.Sum();
-                    
                     string newId = deviceName.Remove(0,16);
                     string dateStr = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
                     string refRoad = "urn:ngsi-ld:RoadSegment:19312:2860:35243";
+                    int intensity;
 
-                    var leftMessage = new Fiware.TrafficFlowObserved(newId, dateStr, 0, totalCountLeft, refRoad);
+                    if (obj.L0_CNT > 0) {
+                        intensity = obj.L0_CNT;
+                        var message = new Fiware.TrafficFlowObserved(newId, dateStr, 0, intensity, refRoad);
 
-                    _fiwareContextBroker.PostNewTrafficFlowObserved(leftMessage);
+                        _fiwareContextBroker.PostNewTrafficFlowObserved(message);
+                    }
 
-                    int[] rightArr = new int[4] {obj.R0_CNT, obj.R1_CNT, obj.R2_CNT, obj.R3_CNT};
+                    if (obj.L1_CNT > 0) {
+                        intensity = obj.L1_CNT;
+                        var message = new Fiware.TrafficFlowObserved(newId, dateStr, 1, intensity, refRoad);
 
-                    int totalCountRight = rightArr.Sum();
+                        _fiwareContextBroker.PostNewTrafficFlowObserved(message);
+                    }
 
-                    var rightMessage = new Fiware.TrafficFlowObserved(newId, dateStr, 1, totalCountRight, refRoad);
+                    if (obj.L2_CNT > 0) {
+                        intensity = obj.L2_CNT;
+                        var message = new Fiware.TrafficFlowObserved(newId, dateStr, 2, intensity, refRoad);
 
-                    _fiwareContextBroker.PostNewTrafficFlowObserved(rightMessage); 
+                        _fiwareContextBroker.PostNewTrafficFlowObserved(message);
+                    }
+
+                    if (obj.L3_CNT > 0) {
+                        intensity = obj.L3_CNT;
+                        var message = new Fiware.TrafficFlowObserved(newId, dateStr, 3, intensity, refRoad);
+
+                        _fiwareContextBroker.PostNewTrafficFlowObserved(message);
+                    }
+
+                    if (obj.R0_CNT > 0) {
+                        intensity = obj.R0_CNT;
+                        var message = new Fiware.TrafficFlowObserved(newId, dateStr, 4, intensity, refRoad);
+
+                        _fiwareContextBroker.PostNewTrafficFlowObserved(message);
+                    }
+
+                    if (obj.R1_CNT > 0) {
+                        intensity = obj.R1_CNT;
+                        var message = new Fiware.TrafficFlowObserved(newId, dateStr, 5, intensity, refRoad);
+
+                        _fiwareContextBroker.PostNewTrafficFlowObserved(message);
+                    }
+
+                    if (obj.R2_CNT > 0) {
+                        intensity = obj.R2_CNT;
+                        var message = new Fiware.TrafficFlowObserved(newId, dateStr, 6, intensity, refRoad);
+
+                        _fiwareContextBroker.PostNewTrafficFlowObserved(message);
+                    }
+
+                    if (obj.R3_CNT > 0) {
+                        intensity = obj.R3_CNT;
+                        var message = new Fiware.TrafficFlowObserved(newId, dateStr, 7, intensity, refRoad);
+
+                        _fiwareContextBroker.PostNewTrafficFlowObserved(message);
+                    }
                 }
                 else
                 {
