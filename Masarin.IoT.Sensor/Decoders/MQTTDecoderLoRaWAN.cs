@@ -66,25 +66,18 @@ namespace Masarin.IoT.Sensor
             else if (deviceName.Contains("TRSense01"))
             {
                 if (obj.ContainsKey("L0_CNT") && obj.ContainsKey("R0_CNT")) {
-                    int[] leftArr = new int[4] {obj.L0_CNT, obj.L1_CNT, obj.L2_CNT, obj.L3_CNT};
 
-                    int totalCountLeft = leftArr.Sum();
-                    
-                    string newId = deviceName.Remove(0,16);
+                    string shortDeviceName = deviceName.Remove(0,16);
                     string dateStr = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
-                    string refRoad = "urn:ngsi-ld:RoadSegment:19312:2860:35243";
 
-                    var leftMessage = new Fiware.TrafficFlowObserved(newId, dateStr, 0, totalCountLeft, refRoad);
-
-                    _fiwareContextBroker.PostNewTrafficFlowObserved(leftMessage);
-
-                    int[] rightArr = new int[4] {obj.R0_CNT, obj.R1_CNT, obj.R2_CNT, obj.R3_CNT};
-
-                    int totalCountRight = rightArr.Sum();
-
-                    var rightMessage = new Fiware.TrafficFlowObserved(newId, dateStr, 1, totalCountRight, refRoad);
-
-                    _fiwareContextBroker.PostNewTrafficFlowObserved(rightMessage); 
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 0, (int)obj.L0_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 1, (int)obj.L1_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 2, (int)obj.L2_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 3, (int)obj.L3_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 4, (int)obj.R0_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 5, (int)obj.R1_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 6, (int)obj.R2_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 7, (int)obj.R3_CNT);
                 }
                 else
                 {
@@ -109,6 +102,22 @@ namespace Masarin.IoT.Sensor
             }
 
             Console.WriteLine($"Got message from deviceName {deviceName}: {json}");
+        }
+        private void ReportTrafficIntensityForLane(string deviceName, string dateStr, int lane, int intensity) {
+
+            string refRoad = "urn:ngsi-ld:RoadSegment:19312:2860:35243";
+            string shortDeviceName = $"{deviceName}:{lane}:{dateStr}";
+            
+            if (intensity > 0) {
+                var message = new Fiware.TrafficFlowObserved(shortDeviceName, dateStr, lane, intensity, refRoad);
+
+                try {
+                    _fiwareContextBroker.PostNewTrafficFlowObserved(message);
+                } catch (Exception e) 
+                {
+                    Console.WriteLine($"Exception caught attempting to post TrafficFlowObserved: {e.Message}");
+                };
+            }
         }
     }
 }
