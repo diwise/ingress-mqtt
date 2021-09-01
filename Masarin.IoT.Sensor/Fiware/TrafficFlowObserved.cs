@@ -29,7 +29,7 @@ namespace Fiware
         [JsonProperty("intensity")]
         public NumberPropertyFromInt Intensity { get; set; }
 
-        [JsonProperty("averageVehiclespeed")]
+        [JsonProperty("averageVehicleSpeed")]
         public NumberPropertyFromDouble AverageVehicleSpeed { get; set; }
 
         [JsonProperty("@context")]

@@ -70,14 +70,14 @@ namespace Masarin.IoT.Sensor
                     string shortDeviceName = deviceName.Remove(0,16);
                     string dateStr = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
 
-                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 0, (int)obj.L0_CNT);
-                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 1, (int)obj.L1_CNT);
-                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 2, (int)obj.L2_CNT);
-                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 3, (int)obj.L3_CNT);
-                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 4, (int)obj.R0_CNT);
-                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 5, (int)obj.R1_CNT);
-                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 6, (int)obj.R2_CNT);
-                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 7, (int)obj.R3_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 0, (int)obj.L0_CNT, (double)obj.L0_AVG);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 1, (int)obj.L1_CNT, (double)obj.L1_AVG);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 2, (int)obj.L2_CNT, (double)obj.L2_AVG);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 3, (int)obj.L3_CNT, (double)obj.L3_AVG);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 4, (int)obj.R0_CNT, (double)obj.R0_AVG);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 5, (int)obj.R1_CNT, (double)obj.R1_AVG);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 6, (int)obj.R2_CNT, (double)obj.R2_AVG);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 7, (int)obj.R3_CNT, (double)obj.R3_AVG);
                 }
                 else
                 {
@@ -103,13 +103,14 @@ namespace Masarin.IoT.Sensor
 
             Console.WriteLine($"Got message from deviceName {deviceName}: {json}");
         }
-        private void ReportTrafficIntensityForLane(string deviceName, string dateStr, int lane, int intensity) {
+        private void ReportTrafficIntensityForLane(string deviceName, string dateStr, int lane, int intensity, double averageSpeed) {
 
             string refRoad = "urn:ngsi-ld:RoadSegment:19312:2860:35243";
             string shortDeviceName = $"{deviceName}:{lane}:{dateStr}";
             
             if (intensity > 0) {
                 var message = new Fiware.TrafficFlowObserved(shortDeviceName, dateStr, lane, intensity, refRoad);
+                message.AverageVehicleSpeed = new NumberPropertyFromDouble(averageSpeed);
 
                 try {
                     _fiwareContextBroker.PostNewTrafficFlowObserved(message);
