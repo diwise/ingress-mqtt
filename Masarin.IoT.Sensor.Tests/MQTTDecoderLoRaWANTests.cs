@@ -42,7 +42,7 @@ namespace Masarin.IoT.Sensor.Tests
 
             decoder.Decode("2020-08-26T07:11:31Z", "iothub", "out", Encoding.UTF8.GetBytes(payload));
 
-            contextBroker.Verify(foo => foo.PostNewTrafficFlowObserved(It.IsAny<TrafficFlowObserved>()), Times.AtLeast(6));
+            contextBroker.Verify(foo => foo.PostNewTrafficFlowObserved(It.IsAny<TrafficFlowObserved>()), Times.Exactly(6));
         }
 
         [Fact]

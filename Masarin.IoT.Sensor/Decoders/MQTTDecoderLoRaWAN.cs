@@ -67,66 +67,16 @@ namespace Masarin.IoT.Sensor
             {
                 if (obj.ContainsKey("L0_CNT") && obj.ContainsKey("R0_CNT")) {
 
-                    string newId = deviceName.Remove(0,16);
-                    string dateStr = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
-                    string refRoad = "urn:ngsi-ld:RoadSegment:19312:2860:35243";
-                    int intensity;
+                    string shortDeviceName = deviceName.Remove(0,16);
 
-                    if (obj.L0_CNT > 0) {
-                        intensity = obj.L0_CNT;
-                        var message = new Fiware.TrafficFlowObserved(newId, dateStr, 0, intensity, refRoad);
-
-                        _fiwareContextBroker.PostNewTrafficFlowObserved(message);
-                    }
-
-                    if (obj.L1_CNT > 0) {
-                        intensity = obj.L1_CNT;
-                        var message = new Fiware.TrafficFlowObserved(newId, dateStr, 1, intensity, refRoad);
-
-                        _fiwareContextBroker.PostNewTrafficFlowObserved(message);
-                    }
-
-                    if (obj.L2_CNT > 0) {
-                        intensity = obj.L2_CNT;
-                        var message = new Fiware.TrafficFlowObserved(newId, dateStr, 2, intensity, refRoad);
-
-                        _fiwareContextBroker.PostNewTrafficFlowObserved(message);
-                    }
-
-                    if (obj.L3_CNT > 0) {
-                        intensity = obj.L3_CNT;
-                        var message = new Fiware.TrafficFlowObserved(newId, dateStr, 3, intensity, refRoad);
-
-                        _fiwareContextBroker.PostNewTrafficFlowObserved(message);
-                    }
-
-                    if (obj.R0_CNT > 0) {
-                        intensity = obj.R0_CNT;
-                        var message = new Fiware.TrafficFlowObserved(newId, dateStr, 4, intensity, refRoad);
-
-                        _fiwareContextBroker.PostNewTrafficFlowObserved(message);
-                    }
-
-                    if (obj.R1_CNT > 0) {
-                        intensity = obj.R1_CNT;
-                        var message = new Fiware.TrafficFlowObserved(newId, dateStr, 5, intensity, refRoad);
-
-                        _fiwareContextBroker.PostNewTrafficFlowObserved(message);
-                    }
-
-                    if (obj.R2_CNT > 0) {
-                        intensity = obj.R2_CNT;
-                        var message = new Fiware.TrafficFlowObserved(newId, dateStr, 6, intensity, refRoad);
-
-                        _fiwareContextBroker.PostNewTrafficFlowObserved(message);
-                    }
-
-                    if (obj.R3_CNT > 0) {
-                        intensity = obj.R3_CNT;
-                        var message = new Fiware.TrafficFlowObserved(newId, dateStr, 7, intensity, refRoad);
-
-                        _fiwareContextBroker.PostNewTrafficFlowObserved(message);
-                    }
+                    ReportTrafficIntensityForLane(shortDeviceName, 0, (int)obj.L0_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, 1, (int)obj.L1_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, 2, (int)obj.L2_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, 3, (int)obj.L3_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, 4, (int)obj.R0_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, 5, (int)obj.R1_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, 6, (int)obj.R2_CNT);
+                    ReportTrafficIntensityForLane(shortDeviceName, 7, (int)obj.R3_CNT);
                 }
                 else
                 {
@@ -151,6 +101,23 @@ namespace Masarin.IoT.Sensor
             }
 
             Console.WriteLine($"Got message from deviceName {deviceName}: {json}");
+        }
+        private void ReportTrafficIntensityForLane(string deviceName, int lane, int intensity) {
+
+            string dateStr = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+            string refRoad = "urn:ngsi-ld:RoadSegment:19312:2860:35243";
+            string shortDeviceName = $"{deviceName}:{lane}:{dateStr}";
+            
+            if (intensity > 0) {
+                var message = new Fiware.TrafficFlowObserved(shortDeviceName, dateStr, lane, intensity, refRoad);
+
+                try {
+                    _fiwareContextBroker.PostNewTrafficFlowObserved(message);
+                } catch (Exception e) 
+                {
+                    Console.WriteLine($"Exception caught attempting to post TrafficFlowObserved: {e.Message}");
+                };
+            }
         }
     }
 }
