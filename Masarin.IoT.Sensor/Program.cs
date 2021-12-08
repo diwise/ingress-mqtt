@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using RabbitMQ.Client;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -152,7 +153,27 @@ namespace Masarin.IoT.Sensor
             var mqttPassword = Environment.GetEnvironmentVariable("MQTT_PASSWORD");
             var mqttHost = Environment.GetEnvironmentVariable("MQTT_HOST");
             var mqttPort = Convert.ToInt32(GetEnvVariableOrDefault("MQTT_PORT", "1883"));
-            var mqttTopic = GetEnvVariableOrDefault("MQTT_TOPIC", "#");
+
+            List<string> list = new List<string>();
+            
+            // Check if we should subscribe to multiple topics
+            var topic = Environment.GetEnvironmentVariable("MQTT_TOPIC_0");
+            var topicIndex = 0;
+
+            while (string.IsNullOrEmpty(topic) == false) {
+                list.Add(topic);
+
+                topicIndex++;
+                topic = Environment.GetEnvironmentVariable($"MQTT_TOPIC_{topicIndex}");
+            }
+
+            // If no indexed list of topics was found, we assume that a single topic has been configured the old way
+            if (list.Count == 0) {
+                topic = GetEnvVariableOrDefault("MQTT_TOPIC", "#");
+                list.Add(topic);
+            }
+
+            var mqttTopics = list.ToArray();
 
             var builder = new MqttClientOptionsBuilder()
                             .WithClientId(Guid.NewGuid().ToString())
@@ -180,8 +201,15 @@ namespace Masarin.IoT.Sensor
 
 			client.UseConnectedHandler( async (e) =>
             {
-                Console.WriteLine("Connected! Subscribing to topic " + mqttTopic + " ...");
-                await client.SubscribeAsync(new TopicFilterBuilder().WithTopic(mqttTopic).Build());
+                Console.WriteLine("Connected!");
+
+                List<TopicFilter> topicFilters = new List<TopicFilter>();
+                foreach (string topic in mqttTopics) {
+                    Console.WriteLine("Subscribing to topic " + topic + " ...");
+                    topicFilters.Add(new TopicFilterBuilder().WithTopic(topic).Build());
+                }
+
+                await client.SubscribeAsync(topicFilters.ToArray());
             });
 
             client.UseApplicationMessageReceivedHandler( e =>
@@ -284,9 +312,10 @@ namespace Masarin.IoT.Sensor
             var logstring = $"{timestamp}\t{node}\t{path}\t{hex}";
             Console.WriteLine(logstring);
 
-            if (node == "application" && path.StartsWith("5/device/") && path.EndsWith("/event/up"))
+            if (node == "application" && path.Contains("/device/") && path.EndsWith("/event/up"))
             {
-                node = path.Substring(9, path.Length - 18);
+                var parts = path.Split("/", 10);
+                node = parts[parts.Length-3];
             }
             else if (node.StartsWith("node_"))
             {
