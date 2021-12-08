@@ -44,7 +44,7 @@ namespace Masarin.IoT.Sensor
             {
                 return _airqualityDecoder;
             }
-            else if (node == "iothub")
+            else if (node == "iothub" || node.StartsWith("0007"))
             {
                 return _loraWANDecoder;
             }

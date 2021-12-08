@@ -22,6 +22,7 @@ namespace Masarin.IoT.Sensor
             var data = JsonConvert.DeserializeObject<dynamic>(json);
             var deviceName = "se:servanet:lora:" + Convert.ToString(data.deviceName);
             var obj = data["object"];
+            var dateStrNow = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
             
             if (deviceName.Contains("sn-elt-livboj-"))
             {
@@ -68,16 +69,15 @@ namespace Masarin.IoT.Sensor
                 if (obj.ContainsKey("L0_CNT") && obj.ContainsKey("R0_CNT")) {
 
                     string shortDeviceName = deviceName.Remove(0,16);
-                    string dateStr = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
 
-                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 0, (int)obj.L0_CNT, (double)obj.L0_AVG);
-                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 1, (int)obj.L1_CNT, (double)obj.L1_AVG);
-                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 2, (int)obj.L2_CNT, (double)obj.L2_AVG);
-                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 3, (int)obj.L3_CNT, (double)obj.L3_AVG);
-                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 4, (int)obj.R0_CNT, (double)obj.R0_AVG);
-                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 5, (int)obj.R1_CNT, (double)obj.R1_AVG);
-                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 6, (int)obj.R2_CNT, (double)obj.R2_AVG);
-                    ReportTrafficIntensityForLane(shortDeviceName, dateStr, 7, (int)obj.R3_CNT, (double)obj.R3_AVG);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStrNow, 0, (int)obj.L0_CNT, (double)obj.L0_AVG);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStrNow, 1, (int)obj.L1_CNT, (double)obj.L1_AVG);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStrNow, 2, (int)obj.L2_CNT, (double)obj.L2_AVG);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStrNow, 3, (int)obj.L3_CNT, (double)obj.L3_AVG);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStrNow, 4, (int)obj.R0_CNT, (double)obj.R0_AVG);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStrNow, 5, (int)obj.R1_CNT, (double)obj.R1_AVG);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStrNow, 6, (int)obj.R2_CNT, (double)obj.R2_AVG);
+                    ReportTrafficIntensityForLane(shortDeviceName, dateStrNow, 7, (int)obj.R3_CNT, (double)obj.R3_AVG);
                 }
                 else
                 {
@@ -100,20 +100,41 @@ namespace Masarin.IoT.Sensor
                     return;
                 }
             }
+            else if (obj.ContainsKey("statusCode"))
+            {
+                int statusCode = obj.statusCode;
+                int curVol = 0;
+
+                deviceName = "se:servanet:lora:msva:" + Convert.ToString(data.deviceName);
+
+                if (obj.ContainsKey("curVol"))
+                {
+                    curVol = obj.curVol;
+                    var entity = new Fiware.WaterConsumptionObserved(deviceName + ":" + dateStrNow, deviceName, dateStrNow, curVol);
+
+                    try {
+                        _fiwareContextBroker.CreateNewEntity(entity);
+                    } catch (Exception e) 
+                    {
+                        Console.WriteLine($"Exception caught attempting to post WaterConsumptionObserved: {e.Message}");
+                    };
+                }
+            }
 
             Console.WriteLine($"Got message from deviceName {deviceName}: {json}");
         }
+
         private void ReportTrafficIntensityForLane(string deviceName, string dateStr, int lane, int intensity, double averageSpeed) {
 
             string refRoad = "urn:ngsi-ld:RoadSegment:19312:2860:35243";
             string shortDeviceName = $"{deviceName}:{lane}:{dateStr}";
             
             if (intensity > 0) {
-                var message = new Fiware.TrafficFlowObserved(shortDeviceName, dateStr, lane, intensity, refRoad);
-                message.AverageVehicleSpeed = new NumberPropertyFromDouble(averageSpeed);
+                var tfo = new Fiware.TrafficFlowObserved(shortDeviceName, dateStr, lane, intensity, refRoad);
+                tfo.AverageVehicleSpeed = new NumberPropertyFromDouble(averageSpeed);
 
                 try {
-                    _fiwareContextBroker.PostNewTrafficFlowObserved(message);
+                    _fiwareContextBroker.CreateNewEntity(tfo);
                 } catch (Exception e) 
                 {
                     Console.WriteLine($"Exception caught attempting to post TrafficFlowObserved: {e.Message}");

@@ -4,6 +4,6 @@ namespace Fiware
     {
         public void PostMessage(DeviceMessage message);
 
-        public void PostNewTrafficFlowObserved(TrafficFlowObserved tfo);
+        public void CreateNewEntity(object entity);
     } 
 }

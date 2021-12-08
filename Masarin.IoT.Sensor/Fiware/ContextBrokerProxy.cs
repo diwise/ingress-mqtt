@@ -35,7 +35,7 @@ namespace Fiware
             Patch(_client, url, data);
         }
 
-        public void PostNewTrafficFlowObserved(TrafficFlowObserved tfo)
+        public void CreateNewEntity(object entity)
         {
             var settings = new JsonSerializerSettings
             {
@@ -43,7 +43,7 @@ namespace Fiware
                 NullValueHandling = NullValueHandling.Ignore
             };
 
-            var json = JsonConvert.SerializeObject(tfo, settings);
+            var json = JsonConvert.SerializeObject(entity, settings);
 
             var data = new StringContent(json, Encoding.UTF8, "application/json+ld");
 
