@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine AS build
 WORKDIR /app
 COPY *.sln .
 COPY Masarin.IoT.Sensor/*.csproj ./Masarin.IoT.Sensor/
@@ -23,7 +23,7 @@ WORKDIR /app/Masarin.IoT.Sensor/
 RUN dotnet publish -c Release -o out
 
 # run the api
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine AS runtime
 WORKDIR /app
 COPY --from=publish /app/Masarin.IoT.Sensor/out ./
 EXPOSE 80
