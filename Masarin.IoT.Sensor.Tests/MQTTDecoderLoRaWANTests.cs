@@ -67,7 +67,16 @@ namespace Masarin.IoT.Sensor.Tests
 
             contextBroker.Verify(foo => foo.PostMessage(It.Is<DeviceMessage>(mo => mo.Value.Value == "co2%3D449")));
         }
-    }    
 
+        [Fact]
+        public void TestThatWaterTempParsesVDDCorrectly()
+        {
+            var contextBroker = new Mock<IContextBrokerProxy>();
+            var decoder = new MQTTDecoderLoRaWAN(contextBroker.Object);
+            var payload = "{\"deviceName\":\"sk-elt-temp-20\",\"devEUI\":\"xxxxxxxxxxxxxxxxxxxx\",\"data\":\"Bw4pDP/8\",\"object\":{\"externalTemperature\":2.4,\"vdd\":3522},\"tags\":{\"Location\":\"UnSet\"}}";
+            decoder.Decode("2020-10-07T15:46:45Z", "iothub", "out", Encoding.UTF8.GetBytes(payload));
 
+            contextBroker.Verify(foo => foo.PostMessage(It.Is<DeviceMessage>(mo => Math.Abs(mo.BatteryLevel.Value - 0.96) < 0.01)));
+        }
+    }
 }

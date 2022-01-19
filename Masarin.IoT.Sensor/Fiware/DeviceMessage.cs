@@ -1,28 +1,43 @@
     namespace Fiware
     {
-        public class ValueProperty 
-        {
-            public string Type { get; }
-            public string Value { get; }
-
-            public ValueProperty(string value)
-            {
-                Type = "Property";
-                Value = value;
-            }
-        }
         public class DeviceMessage
         {
             public string Id { get; }
             public string Type { get; }
-            public ValueProperty Value { get; }
+            public TextProperty Value { get; }
 
-            public DeviceMessage(string id, string value)
+            public NumberPropertyFromDouble BatteryLevel { get; set; }
+            public NumberPropertyFromDouble RSSI { get; set; }
+            public NumberPropertyFromDouble SNR { get; set; }
+
+
+            public DeviceMessage(string id)
             {
                 Id = "urn:ngsi-ld:Device:" + id;
                 Type = "Device";
-                Value = new ValueProperty(value);
+            }
+
+            public DeviceMessage(string id, string value) : this(id)
+            {
+                Value = new TextProperty(value);
+            }
+
+            public DeviceMessage WithVoltage(double voltage)
+            {
+                BatteryLevel = new NumberPropertyFromDouble(voltage);
+                return this;
+            }
+
+            public DeviceMessage WithRSSI(double rssi)
+            {
+                RSSI = new NumberPropertyFromDouble(rssi);
+                return this;
+            }
+
+            public DeviceMessage WithSNR(double snr)
+            {
+                SNR = new NumberPropertyFromDouble(snr);
+                return this;
             }
         }
     }
-    

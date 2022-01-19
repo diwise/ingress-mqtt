@@ -1,5 +1,6 @@
 using Masarin.IoT.Sensor.Messages;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Text;
 using Fiware;
@@ -21,8 +22,14 @@ namespace Masarin.IoT.Sensor
             string json = Encoding.UTF8.GetString(payload);
             var data = JsonConvert.DeserializeObject<dynamic>(json);
             var deviceName = "se:servanet:lora:" + Convert.ToString(data.deviceName);
-            var obj = data["object"];
             var dateStrNow = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+            dynamic obj = null;
+
+            if (data.ContainsKey("object"))
+            {
+                obj = data["object"];
+            }
             
             if (deviceName.Contains("sn-elt-livboj-"))
             {
@@ -38,7 +45,13 @@ namespace Masarin.IoT.Sensor
 
                     var message = new Fiware.DeviceMessage(deviceName, value);
 
-                    _fiwareContextBroker.PostMessage(message);
+                    try {
+                        _fiwareContextBroker.PostMessage(message);
+                    }
+                    catch (Exception e) 
+                    {
+                        Console.WriteLine($"Exception caught attempting to post Device update: {e.Message}");
+                    };
                 }
                 else
                 {
@@ -53,10 +66,30 @@ namespace Masarin.IoT.Sensor
                     double value = obj.externalTemperature;
 
                     string stringValue = $"t%3D{value}";
-
                     var message = new Fiware.DeviceMessage(deviceName, stringValue);
 
-                    _fiwareContextBroker.PostMessage(message);
+                    if (obj.ContainsKey("vdd"))
+                    {
+                        double batteryLevel = obj.vdd;
+                        const double MAX_BATTERY_LEVEL = 3665;
+
+                        if (batteryLevel > MAX_BATTERY_LEVEL)
+                        {
+                            Console.WriteLine($"Battery level of {deviceName} is bigger than the max level. {batteryLevel} > {MAX_BATTERY_LEVEL}!");
+                        }
+
+                        batteryLevel = batteryLevel / MAX_BATTERY_LEVEL;
+                        message = message.WithVoltage(Math.Round(batteryLevel, 2));
+                    }
+
+                    try
+                    {
+                        _fiwareContextBroker.PostMessage(message);
+                    }
+                    catch (Exception e) 
+                    {
+                        Console.WriteLine($"Exception caught attempting to post Device update: {e.Message}");
+                    };
                 }
                 else
                 {
@@ -92,7 +125,22 @@ namespace Masarin.IoT.Sensor
                     double value = obj.co2;
                     var strValue = $"co2%3D{value}";
                     var msg = new Fiware.DeviceMessage(deviceName, strValue);
-                    _fiwareContextBroker.PostMessage(msg);
+
+                    if (obj.ContainsKey("vdd"))
+                    {
+                        double batteryLevel = obj.vdd;
+                        batteryLevel = batteryLevel / 3665.0;
+                        msg = msg.WithVoltage(Math.Round(batteryLevel, 2));
+                    }
+
+                    try
+                    {
+                        _fiwareContextBroker.PostMessage(msg);
+                    }
+                    catch (Exception e) 
+                    {
+                        Console.WriteLine($"Exception caught attempting to post Device update: {e.Message}");
+                    };
                 }
                 else
                 {
@@ -100,28 +148,98 @@ namespace Masarin.IoT.Sensor
                     return;
                 }
             }
-            else if (obj.ContainsKey("statusCode"))
+            else if (data.ContainsKey("applicationName") && (data.applicationName == "Watermetering" || data.applicationName == "Soraker" || data.applicationName == "Bergsaker"))
             {
-                int statusCode = obj.statusCode;
-                int curVol = 0;
-
-                deviceName = "se:servanet:lora:msva:" + Convert.ToString(data.deviceName);
-
-                if (obj.ContainsKey("curVol"))
+                if (topic == "/event/up")
                 {
-                    curVol = obj.curVol;
-                    var entity = new Fiware.WaterConsumptionObserved(deviceName + ":" + dateStrNow, deviceName, dateStrNow, curVol);
-
-                    try {
-                        _fiwareContextBroker.CreateNewEntity(entity);
-                    } catch (Exception e) 
+                    if (obj != null && obj.ContainsKey("statusCode"))
                     {
-                        Console.WriteLine($"Exception caught attempting to post WaterConsumptionObserved: {e.Message}");
-                    };
+                        int statusCode = obj.statusCode;
+                        int curVol = 0;
+
+                        deviceName = "se:servanet:lora:msva:" + Convert.ToString(data.deviceName);
+
+                        if (obj.ContainsKey("curVol"))
+                        {
+                            curVol = obj.curVol;
+                            if (curVol >= 0) {
+                                var entity = new Fiware.WaterConsumptionObserved(deviceName + ":" + dateStrNow, deviceName, dateStrNow, curVol);
+
+                                try
+                                {
+                                    _fiwareContextBroker.CreateNewEntity(entity);
+                                }
+                                catch (Exception e) 
+                                {
+                                    Console.WriteLine($"Exception caught attempting to post WaterConsumptionObserved: {e.Message}");
+                                };
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Ignoring negative current volume: {curVol}");
+                            }
+                        }
+                    }
+
+                    if (data.ContainsKey("rxInfo"))
+                    {
+                        dynamic rxInfo = data["rxInfo"];
+                        if (rxInfo.Count > 0)
+                        {
+                            dynamic gateway = rxInfo[0];
+                            int maxRSSI = gateway.rssi;
+                            int snr = gateway.loRaSNR;
+                            string name = gateway.name;
+
+                            for (int i = 1; i < rxInfo.Count; i++)
+                            {
+                                if (rxInfo[i].rssi > maxRSSI)
+                                {
+                                    maxRSSI = rxInfo[i].rssi;
+                                    snr = gateway.loRaSNR;
+                                    name = rxInfo[i].name;
+                                }
+                            }
+
+                            Console.WriteLine($"{deviceName} is connected to gateway {name} with rssi {maxRSSI} and snr {snr}");
+
+                            double rssiLevel = Math.Round((125.0 - Math.Abs(maxRSSI)) / 100.0, 2);
+                            rssiLevel = Math.Min(Math.Max(0, rssiLevel), 1.0); // RSSI level should be in range [0 1]
+
+                            double snrLevel = Math.Round((snr + 20.0) / 32.0, 2);
+                            snrLevel = Math.Min(Math.Max(0, snrLevel), 1.0);
+
+                            var msg = new Fiware.DeviceMessage(deviceName).WithRSSI(rssiLevel).WithSNR(snrLevel);
+                            try
+                            {
+                                _fiwareContextBroker.PostMessage(msg);
+                            }
+                            catch (Exception e) 
+                            {
+                                Console.WriteLine($"Exception caught attempting to post Device update: {e.Message}");
+                            };
+                        }
+                    }
+                }
+                else if (topic == "/event/status")
+                {
+                    if (data.externalPowerSource == false && data.batteryLevelUnavailable == false)
+                    {
+                        double batteryLevel = data.batteryLevel / 100.0;
+                        var msg = new Fiware.DeviceMessage(deviceName).WithVoltage(Math.Round(batteryLevel, 2));
+                        try
+                        {
+                            _fiwareContextBroker.PostMessage(msg);
+                        }
+                        catch (Exception e) 
+                        {
+                            Console.WriteLine($"Exception caught attempting to post Device update: {e.Message}");
+                        };
+                    }
                 }
             }
 
-            Console.WriteLine($"Got message from deviceName {deviceName}: {json}");
+            Console.WriteLine($"Got message from {deviceName} on topic {topic}: {json}");
         }
 
         private void ReportTrafficIntensityForLane(string deviceName, string dateStr, int lane, int intensity, double averageSpeed) {

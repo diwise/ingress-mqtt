@@ -312,10 +312,14 @@ namespace Masarin.IoT.Sensor
             var logstring = $"{timestamp}\t{node}\t{path}\t{hex}";
             Console.WriteLine(logstring);
 
-            if (node == "application" && path.Contains("/device/") && path.EndsWith("/event/up"))
+            if (node == "application" && path.Contains("/device/"))
             {
-                var parts = path.Split("/", 10);
-                node = parts[parts.Length-3];
+                if (path.EndsWith("/event/up") || path.EndsWith("/event/error") || path.EndsWith("/event/status"))
+                {
+                    var parts = path.Split("/", 10);
+                    node = parts[parts.Length-3];
+                    path = $"/event/{parts[parts.Length-1]}";
+                }
             }
             else if (node.StartsWith("node_"))
             {
