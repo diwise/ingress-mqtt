@@ -165,14 +165,14 @@ namespace Masarin.IoT.Sensor
             }
             else if (data.ContainsKey("applicationName") && (data.applicationName == "Watermetering" || data.applicationName == "Soraker" || data.applicationName == "Bergsaker"))
             {
+                deviceName = "se:servanet:lora:msva:" + Convert.ToString(data.deviceName);
+
                 if (topic == "/event/up")
                 {
                     if (obj != null && obj.ContainsKey("statusCode"))
                     {
                         int statusCode = obj.statusCode;
                         int curVol = 0;
-
-                        deviceName = "se:servanet:lora:msva:" + Convert.ToString(data.deviceName);
 
                         if (obj.ContainsKey("curVol"))
                         {
