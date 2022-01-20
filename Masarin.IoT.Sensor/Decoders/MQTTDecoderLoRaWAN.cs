@@ -122,20 +122,36 @@ namespace Masarin.IoT.Sensor
             {
                 if (obj.ContainsKey("co2"))
                 {
-                    double value = obj.co2;
-                    var strValue = $"co2%3D{value}";
-                    var msg = new Fiware.DeviceMessage(deviceName, strValue);
+                    double co2 = obj.co2;
+                    DateTime dateObserved = DateTime.UtcNow;
+                    var aqoMsg = new Fiware.AirQualityObserved(deviceName, dateObserved.ToString());
+                    aqoMsg = aqoMsg.WithCO2(co2);
+
+                    if (obj.ContainsKey("temperature")) 
+                    {
+                        double temp = obj.temperature;
+                        aqoMsg = aqoMsg.WithTemperature(temp);
+                    }
+
+                    if (obj.ContainsKey("humidity")) 
+                    {
+                        double humidity = obj.humidity;
+                        aqoMsg = aqoMsg.WithHumidity(humidity);
+                    }
+
+                    var deviceMsg = new Fiware.DeviceMessage(deviceName);
 
                     if (obj.ContainsKey("vdd"))
                     {
                         double batteryLevel = obj.vdd;
                         batteryLevel = batteryLevel / 3665.0;
-                        msg = msg.WithVoltage(Math.Round(batteryLevel, 2));
+                        deviceMsg = deviceMsg.WithVoltage(Math.Round(batteryLevel, 2));
                     }
 
                     try
                     {
-                        _fiwareContextBroker.PostMessage(msg);
+                        _fiwareContextBroker.PostMessage(deviceMsg);
+                        _fiwareContextBroker.CreateNewEntity(aqoMsg);
                     }
                     catch (Exception e) 
                     {
