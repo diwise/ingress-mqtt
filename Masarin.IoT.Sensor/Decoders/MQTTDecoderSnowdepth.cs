@@ -4,28 +4,26 @@ using Newtonsoft.Json;
 using System;
 using System.Buffers.Binary;
 using System.Text;
+using Fiware;
 
 namespace Masarin.IoT.Sensor
 {
     public class MQTTDecoderSnowdepth : MQTTDecoder
     {
-        class SnowdepthPayloadData
-        {
-            public string Data {get; set; }
-        }
-
+        private readonly IContextBrokerProxy _fiwareContextBroker = null;
         private readonly IMessageQueue _messageQueue = null;
 
-        public MQTTDecoderSnowdepth(IMessageQueue messageQueue)
+        public MQTTDecoderSnowdepth(IMessageQueue messageQueue, IContextBrokerProxy contextBroker)
         {
+            _fiwareContextBroker = contextBroker;
             _messageQueue = messageQueue;
         }
 
         public override void Decode(string timestamp, string device, string topic, byte[] payload)
         {
             string json = Encoding.UTF8.GetString(payload);
-            SnowdepthPayloadData data = JsonConvert.DeserializeObject<SnowdepthPayloadData>(json);
-            payload = System.Convert.FromBase64String(data.Data);
+            dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
+            payload = System.Convert.FromBase64String(Convert.ToString(data.data));
 
             string deviceInHex = device;
             device = Int64.Parse(device, System.Globalization.NumberStyles.HexNumber).ToString();
@@ -110,9 +108,9 @@ namespace Masarin.IoT.Sensor
             }
 
             // TODO: We need to decide on the device names. Should we use the name from the LoRa app server?
-            device = "snow_" + deviceInHex;
+            string deviceName = "snow_" + deviceInHex;
 
-            IoTHubMessageOrigin origin = new IoTHubMessageOrigin(device, latitude, longitude);
+            IoTHubMessageOrigin origin = new IoTHubMessageOrigin(deviceName, latitude, longitude);
 
             double volts = payload[0];
             volts = Math.Round(3 * ((volts * 0.005) + 1.1), 3);
@@ -134,7 +132,7 @@ namespace Masarin.IoT.Sensor
                 }
             }
             else {
-                Console.WriteLine($"Ignoring snowdepth reading from {device}. Sensor is not OK.");
+                Console.WriteLine($"Ignoring snowdepth reading from {deviceName}. Sensor is not OK.");
             }
 
             double temperature = BinaryPrimitives.ReadUInt16BigEndian(span.Slice(start: 12, length: 2));
@@ -146,6 +144,50 @@ namespace Masarin.IoT.Sensor
 
             double pressure = BinaryPrimitives.ReadUInt32BigEndian(span.Slice(start: 15, length: 4));
             _messageQueue.PostMessage(new TelemetryPressure(origin, timestamp, (int) pressure));
+
+            if (data.ContainsKey("rxInfo"))
+            {
+                dynamic rxInfo = data["rxInfo"];
+                if (rxInfo.Count > 0)
+                {
+                    dynamic gateway = rxInfo[0];
+                    int maxRSSI = gateway.rssi;
+                    int snr = gateway.loRaSNR;
+                    string name = gateway.name;
+
+                    for (int i = 1; i < rxInfo.Count; i++)
+                    {
+                        if (rxInfo[i].rssi > maxRSSI)
+                        {
+                            maxRSSI = rxInfo[i].rssi;
+                            snr = gateway.loRaSNR;
+                            name = rxInfo[i].name;
+                        }
+                    }
+
+                    Console.WriteLine($"{deviceName} is connected to gateway {name} with rssi {maxRSSI} and snr {snr}");
+
+                    double rssiLevel = Math.Round((125.0 - Math.Abs(maxRSSI)) / 100.0, 2);
+                    rssiLevel = Math.Min(Math.Max(0, rssiLevel), 1.0); // RSSI level should be in range [0 1]
+
+                    double snrLevel = Math.Round((snr + 20.0) / 32.0, 2);
+                    snrLevel = Math.Min(Math.Max(0, snrLevel), 1.0);
+
+                    deviceName = "se:servanet:lora:" + deviceName;
+
+                    var msg = new Fiware.DeviceMessage(deviceName).WithRSSI(rssiLevel).WithSNR(snrLevel);
+                    msg = msg.WithVoltage(Math.Min(Math.Max(0, volts / 4.925), 1));
+
+                    try
+                    {
+                        _fiwareContextBroker.PostMessage(msg);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"Exception caught attempting to post Device update: {e.Message}");
+                    };
+                }
+            }
         }
     }
 }

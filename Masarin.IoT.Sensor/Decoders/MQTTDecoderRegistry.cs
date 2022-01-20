@@ -16,7 +16,7 @@ namespace Masarin.IoT.Sensor
             _bicycleDecoder = new MQTTDecoderWinterCycle(messageQueue);
             _avlDecoder = new MQTTDecoderIcomit(messageQueue);
             _weatherDecoder = new MQTTDecoderAurorasWS(messageQueue);
-            _snowdepthDecoder = new MQTTDecoderSnowdepth(messageQueue);
+            _snowdepthDecoder = new MQTTDecoderSnowdepth(messageQueue, fiwareContextBroker);
             _airqualityDecoder = new MQTTDecoderAirQuality(messageQueue);
             _loraWANDecoder = new MQTTDecoderLoRaWAN(fiwareContextBroker);
             _nullDecoder = new MQTTNullDecoder();
