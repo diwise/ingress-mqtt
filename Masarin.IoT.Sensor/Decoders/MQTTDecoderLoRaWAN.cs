@@ -123,8 +123,7 @@ namespace Masarin.IoT.Sensor
                 if (obj.ContainsKey("co2"))
                 {
                     double co2 = obj.co2;
-                    DateTime dateObserved = DateTime.UtcNow;
-                    var aqoMsg = new Fiware.AirQualityObserved(deviceName, dateObserved.ToString());
+                    var aqoMsg = new Fiware.AirQualityObserved(deviceName, dateStrNow);
                     aqoMsg = aqoMsg.WithCO2(co2);
 
                     if (obj.ContainsKey("temperature")) 
@@ -135,7 +134,7 @@ namespace Masarin.IoT.Sensor
 
                     if (obj.ContainsKey("humidity")) 
                     {
-                        double humidity = obj.humidity;
+                        double humidity = obj.humidity/100.0;
                         aqoMsg = aqoMsg.WithHumidity(humidity);
                     }
 
