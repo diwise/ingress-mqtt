@@ -149,8 +149,8 @@ namespace Masarin.IoT.Sensor
 
                     try
                     {
-                        _fiwareContextBroker.PostMessage(deviceMsg);
                         _fiwareContextBroker.CreateNewEntity(aqoMsg);
+                        _fiwareContextBroker.PostMessage(deviceMsg);  
                     }
                     catch (Exception e) 
                     {
