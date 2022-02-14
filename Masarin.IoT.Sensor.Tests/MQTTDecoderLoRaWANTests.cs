@@ -3,6 +3,7 @@ using System.Text;
 using Xunit;
 using Moq;
 using Fiware;
+using Storage;
 
 namespace Masarin.IoT.Sensor.Tests
 {
@@ -81,21 +82,35 @@ namespace Masarin.IoT.Sensor.Tests
         }
 
         [Fact]
-        public void TestWaterConsumptionDoesNotSendDeviceMessageOrCreateEntityOnNoStatusCode()
+        public void TestWaterConsumptionPostMessageOnEventStatus()
         {
             var contextBroker = new Mock<IContextBrokerProxy>();
             var decoder = new MQTTDecoderLoRaWAN(contextBroker.Object);
-            var payload = "{\"applicationID\":\"2\",\"applicationName\":\"Watermetering\",\"deviceName\":\"05393901\",\"deviceProfileName\":\"Axioma_Universal_Codec\",\"deviceProfileID\":\"xxxxxxxxxxxxxxx\",\"devEUI\":\"xxxxxxxxxxxxx\"}";
-            decoder.Decode("2020-10-07T15:46:45Z", "iothub", "/event/up", Encoding.UTF8.GetBytes(payload));    
+            var payload = "{\"applicationID\":\"2\",\"applicationName\":\"Watermetering\",\"deviceName\":\"05393901\",\"devEUI\":\"0007090000524ded\",\"margin\":-30,\"externalPowerSource\":false,\"batteryLevel\":95.67,\"batteryLevelUnavailable\":false,\"tags\":{\"Location\":\"UnSet\",\"SerialNo\":\"05393901\"}}";
+            decoder.Decode("2020-10-07T15:46:45Z", "iothub", "/event/status", Encoding.UTF8.GetBytes(payload));    
 
             contextBroker.Verify(foo => foo.CreateNewEntity(It.IsAny<WaterConsumptionObserved>()), Times.Never());
 
-            contextBroker.Verify(foo => foo.PostMessage(It.IsAny<DeviceMessage>()), Times.Never());
+            contextBroker.Verify(foo => foo.PostMessage(It.IsAny<DeviceMessage>()), Times.Once());
         }
 
         [Fact]
         public void TestWaterConsumptionCreatesNewEntityOnStatusAndCurrentVolumeOkay()
         {
+            var contextBroker = new Mock<IContextBrokerProxy>();
+            var decoder = new MQTTDecoderLoRaWAN(contextBroker.Object);
+            var payload = "{\"applicationID\":\"2\",\"applicationName\":\"Watermetering\",\"deviceName\":\"05394167\",\"deviceProfileName\":\"Axioma_Universal_Codec\",\"deviceProfileID\":\"xxxxxxxxxxx\",\"devEUI\":\"xxxxxxxxxx\",\"txInfo\":{\"frequency\":867100000,\"dr\":0},\"adr\":true,\"fCnt\":182,\"fPort\":100,\"data\":\"xxxxxxxxxxxxxxxxxxxxxx\",\"object\":{\"curDateTime\":\"2022-02-10 15:13:57\",\"curVol\":1009,\"deltaVol\":{\"id1\":0,\"id10\":13,\"id11\":10,\"id12\":2,\"id13\":0,\"id14\":1,\"id15\":0,\"id16\":5,\"id17\":0,\"id18\":0,\"id19\":0,\"id2\":8,\"id20\":2,\"id21\":0,\"id22\":0,\"id23\":0,\"id3\":0,\"id4\":0,\"id5\":0,\"id6\":0,\"id7\":0,\"id8\":5,\"id9\":6},\"frameVersion\":1,\"statusCode\":0},\"tags\":{\"Location\":\"UnSet\",\"SerialNo\":\"05394167\"}}";
+            decoder.Decode("2020-10-07T15:46:45Z", "iothub", "/event/up", Encoding.UTF8.GetBytes(payload));    
+
+            contextBroker.Verify(foo => foo.CreateNewEntity(It.IsAny<WaterConsumptionObserved>()), Times.Once());
+
+            contextBroker.Verify(foo => foo.PostMessage(It.IsAny<DeviceMessage>()), Times.Once());
+        }
+        
+        [Fact]
+        public void TestWaterConsumptionStatusCodeNotTheSameExpectPostMessage()
+        {
+            InMemoryDeviceStateStorage.StoreDeviceState("se:servanet:lora:msva:05394167", "mockstatus");
             var contextBroker = new Mock<IContextBrokerProxy>();
             var decoder = new MQTTDecoderLoRaWAN(contextBroker.Object);
             var payload = "{\"applicationID\":\"2\",\"applicationName\":\"Watermetering\",\"deviceName\":\"05394167\",\"deviceProfileName\":\"Axioma_Universal_Codec\",\"deviceProfileID\":\"xxxxxxxxxxx\",\"devEUI\":\"xxxxxxxxxx\",\"txInfo\":{\"frequency\":867100000,\"dr\":0},\"adr\":true,\"fCnt\":182,\"fPort\":100,\"data\":\"xxxxxxxxxxxxxxxxxxxxxx\",\"object\":{\"curDateTime\":\"2022-02-10 15:13:57\",\"curVol\":1009,\"deltaVol\":{\"id1\":0,\"id10\":13,\"id11\":10,\"id12\":2,\"id13\":0,\"id14\":1,\"id15\":0,\"id16\":5,\"id17\":0,\"id18\":0,\"id19\":0,\"id2\":8,\"id20\":2,\"id21\":0,\"id22\":0,\"id23\":0,\"id3\":0,\"id4\":0,\"id5\":0,\"id6\":0,\"id7\":0,\"id8\":5,\"id9\":6},\"frameVersion\":1,\"statusCode\":0},\"tags\":{\"Location\":\"UnSet\",\"SerialNo\":\"05394167\"}}";
