@@ -2,9 +2,11 @@ using Masarin.IoT.Sensor.Messages;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using Fiware;
 using System.Linq;
+using Storage;
 
 namespace Masarin.IoT.Sensor
 
@@ -171,7 +173,11 @@ namespace Masarin.IoT.Sensor
                 {
                     if (obj != null && obj.ContainsKey("statusCode"))
                     {
+                        string previousStatus = InMemoryDeviceStateStorage.GetDeviceState(deviceName);
+                        
                         int statusCode = obj.statusCode;
+                        string stringStatus = statusCode.ToString();
+
                         int curVol = 0;
 
                         if (obj.ContainsKey("curVol"))
@@ -188,6 +194,22 @@ namespace Masarin.IoT.Sensor
                                 {
                                     Console.WriteLine($"Exception caught attempting to post WaterConsumptionObserved: {e.Message}");
                                 };
+
+                                if (previousStatus == string.Empty)
+                                {
+                                    InMemoryDeviceStateStorage.StoreDeviceState(deviceName, stringStatus);
+                                } else if (previousStatus != stringStatus) {
+                                    var msg = new Fiware.DeviceMessage(deviceName).WithDeviceState(stringStatus);
+
+                                    try
+                                    {
+                                        _fiwareContextBroker.PostMessage(msg);
+                                    } 
+                                    catch (Exception e) 
+                                    {
+                                        Console.WriteLine($"Exception caught attempting to post Device update: {e.Message}");
+                                    };
+                                }
                             }
                             else
                             {
