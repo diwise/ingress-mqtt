@@ -86,12 +86,12 @@ namespace Masarin.IoT.Sensor.Tests
         {
             var contextBroker = new Mock<IContextBrokerProxy>();
             var decoder = new MQTTDecoderLoRaWAN(contextBroker.Object);
-            var payload = "{\"applicationID\":\"2\",\"applicationName\":\"Watermetering\",\"deviceName\":\"05393901\",\"devEUI\":\"0007090000524ded\",\"margin\":-30,\"externalPowerSource\":false,\"batteryLevel\":95.67,\"batteryLevelUnavailable\":false,\"tags\":{\"Location\":\"UnSet\",\"SerialNo\":\"05393901\"}}";
+            var payload = "{\"applicationID\":\"2\",\"applicationName\":\"Watermetering\",\"deviceName\":\"05393901\",\"devEUI\":\"xxxxxxxxxxxxx\",\"margin\":-30,\"externalPowerSource\":false,\"batteryLevel\":95.67,\"batteryLevelUnavailable\":false,\"tags\":{\"Location\":\"UnSet\",\"SerialNo\":\"05393901\"}}";
             decoder.Decode("2020-10-07T15:46:45Z", "iothub", "/event/status", Encoding.UTF8.GetBytes(payload));    
 
             contextBroker.Verify(foo => foo.CreateNewEntity(It.IsAny<WaterConsumptionObserved>()), Times.Never());
 
-            contextBroker.Verify(foo => foo.PostMessage(It.IsAny<DeviceMessage>()), Times.Once());
+            contextBroker.Verify(foo => foo.PostMessage(It.IsAny<DeviceMessage>()), Times.Exactly(1));
         }
 
         [Fact]
@@ -104,7 +104,7 @@ namespace Masarin.IoT.Sensor.Tests
 
             contextBroker.Verify(foo => foo.CreateNewEntity(It.IsAny<WaterConsumptionObserved>()), Times.Once());
 
-            contextBroker.Verify(foo => foo.PostMessage(It.IsAny<DeviceMessage>()), Times.Once());
+            contextBroker.Verify(foo => foo.PostMessage(It.IsAny<DeviceMessage>()), Times.Exactly(1));
         }
         
         [Fact]
@@ -118,7 +118,7 @@ namespace Masarin.IoT.Sensor.Tests
 
             contextBroker.Verify(foo => foo.CreateNewEntity(It.IsAny<WaterConsumptionObserved>()), Times.Once());
 
-            contextBroker.Verify(foo => foo.PostMessage(It.IsAny<DeviceMessage>()), Times.Once());
+            contextBroker.Verify(foo => foo.PostMessage(It.IsAny<DeviceMessage>()), Times.Exactly(1));
         }
     }
 }
