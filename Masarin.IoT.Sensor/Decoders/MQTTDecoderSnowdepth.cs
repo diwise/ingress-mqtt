@@ -23,7 +23,7 @@ namespace Masarin.IoT.Sensor
         {
             string json = Encoding.UTF8.GetString(payload);
             dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
-            payload = System.Convert.FromBase64String(Convert.ToString(data.data));
+            payload = Convert.FromBase64String(Convert.ToString(data.data));
 
             string deviceInHex = device;
             device = Int64.Parse(device, System.Globalization.NumberStyles.HexNumber).ToString();
@@ -175,7 +175,7 @@ namespace Masarin.IoT.Sensor
 
                     deviceName = "se:servanet:lora:" + deviceName;
 
-                    var msg = new Fiware.DeviceMessage(deviceName).WithRSSI(rssiLevel).WithSNR(snrLevel);
+                    var msg = new DeviceMessage(deviceName).WithRSSI(rssiLevel).WithSNR(snrLevel);
                     msg = msg.WithVoltage(Math.Min(Math.Max(0, volts / 4.925), 1));
 
                     try

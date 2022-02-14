@@ -47,14 +47,14 @@ namespace Masarin.IoT.Sensor
 
     class RabbitMQWrapper : IMessageQueue
     {
-        private RabbitMQ.Client.IConnection _rmqConnection;
-        private RabbitMQ.Client.IModel _rmqModel;
+        private IConnection _rmqConnection;
+        private IModel _rmqModel;
 
         private const string _exchangeName = "iot-msg-exchange-topic";
 
         private readonly JsonSerializerSettings _serializerSettings;
 
-        public RabbitMQWrapper(RabbitMQ.Client.IConnection connection)
+        public RabbitMQWrapper(IConnection connection)
         {
             _rmqConnection = connection;
             _rmqModel = _rmqConnection.CreateModel();
@@ -132,7 +132,7 @@ namespace Masarin.IoT.Sensor
                 Console.WriteLine($"RabbitMQ Exception: {e.Message}");
                 if(debugEnvironment == false)
                 {
-                    System.Environment.Exit(1);
+                    Environment.Exit(1);
                 }
             }
 
