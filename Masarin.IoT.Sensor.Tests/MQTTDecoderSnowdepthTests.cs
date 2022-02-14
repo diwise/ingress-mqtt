@@ -1,7 +1,6 @@
 using System;
 using System.Text;
 using Xunit;
-using Masarin.IoT.Sensor;
 using Moq;
 using Fiware;
 

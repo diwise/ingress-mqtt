@@ -1,11 +1,7 @@
-using Masarin.IoT.Sensor.Messages;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.Text;
 using Fiware;
-using System.Linq;
 using Storage;
 
 namespace Masarin.IoT.Sensor

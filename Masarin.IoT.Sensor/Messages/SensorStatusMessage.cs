@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Masarin.IoT.Sensor.Messages
+﻿namespace Masarin.IoT.Sensor.Messages
 {
 	class SensorStatusMessage : IoTHubMessage
 	{

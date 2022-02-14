@@ -1,5 +1,3 @@
-
-using Masarin.IoT.Sensor.Messages;
 using System;
 using System.Buffers.Binary;
 
