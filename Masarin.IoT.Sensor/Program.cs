@@ -1,10 +1,6 @@
 ﻿using MQTTnet;
 using MQTTnet.Client;
-using MQTTnet.Client.Connecting;
-using MQTTnet.Client.Disconnecting;
 using MQTTnet.Client.Options;
-using MQTTnet.Client.Receiving;
-using MQTTnet.Diagnostics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using RabbitMQ.Client;
@@ -51,14 +47,14 @@ namespace Masarin.IoT.Sensor
 
     class RabbitMQWrapper : IMessageQueue
     {
-        private RabbitMQ.Client.IConnection _rmqConnection;
-        private RabbitMQ.Client.IModel _rmqModel;
+        private IConnection _rmqConnection;
+        private IModel _rmqModel;
 
         private const string _exchangeName = "iot-msg-exchange-topic";
 
         private readonly JsonSerializerSettings _serializerSettings;
 
-        public RabbitMQWrapper(RabbitMQ.Client.IConnection connection)
+        public RabbitMQWrapper(IConnection connection)
         {
             _rmqConnection = connection;
             _rmqModel = _rmqConnection.CreateModel();
@@ -136,7 +132,7 @@ namespace Masarin.IoT.Sensor
                 Console.WriteLine($"RabbitMQ Exception: {e.Message}");
                 if(debugEnvironment == false)
                 {
-                    System.Environment.Exit(1);
+                    Environment.Exit(1);
                 }
             }
 

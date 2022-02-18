@@ -1,10 +1,8 @@
-using Masarin.IoT.Sensor.Messages;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Text;
 using Fiware;
-using System.Linq;
+using Storage;
 
 namespace Masarin.IoT.Sensor
 
@@ -43,7 +41,7 @@ namespace Masarin.IoT.Sensor
                         value = "off";
                     }
 
-                    var message = new Fiware.DeviceMessage(deviceName, value);
+                    var message = new DeviceMessage(deviceName, value);
 
                     try {
                         _fiwareContextBroker.PostMessage(message);
@@ -66,7 +64,7 @@ namespace Masarin.IoT.Sensor
                     double value = obj.externalTemperature;
 
                     string stringValue = $"t%3D{value}";
-                    var message = new Fiware.DeviceMessage(deviceName, stringValue);
+                    var message = new DeviceMessage(deviceName, stringValue);
 
                     if (obj.ContainsKey("vdd"))
                     {
@@ -123,7 +121,7 @@ namespace Masarin.IoT.Sensor
                 if (obj.ContainsKey("co2"))
                 {
                     double co2 = obj.co2;
-                    var aqoMsg = new Fiware.AirQualityObserved(deviceName, dateStrNow);
+                    var aqoMsg = new AirQualityObserved(deviceName, dateStrNow);
                     aqoMsg = aqoMsg.WithCO2(co2);
 
                     if (obj.ContainsKey("temperature")) 
@@ -138,7 +136,7 @@ namespace Masarin.IoT.Sensor
                         aqoMsg = aqoMsg.WithHumidity(humidity);
                     }
 
-                    var deviceMsg = new Fiware.DeviceMessage(deviceName);
+                    var deviceMsg = new DeviceMessage(deviceName);
 
                     if (obj.ContainsKey("vdd"))
                     {
@@ -171,14 +169,13 @@ namespace Masarin.IoT.Sensor
                 {
                     if (obj != null && obj.ContainsKey("statusCode"))
                     {
-                        int statusCode = obj.statusCode;
                         int curVol = 0;
 
                         if (obj.ContainsKey("curVol"))
                         {
                             curVol = obj.curVol;
                             if (curVol >= 0) {
-                                var entity = new Fiware.WaterConsumptionObserved(deviceName + ":" + dateStrNow, deviceName, dateStrNow, curVol);
+                                var entity = new WaterConsumptionObserved(deviceName + ":" + dateStrNow, deviceName, dateStrNow, curVol);
 
                                 try
                                 {
@@ -188,6 +185,26 @@ namespace Masarin.IoT.Sensor
                                 {
                                     Console.WriteLine($"Exception caught attempting to post WaterConsumptionObserved: {e.Message}");
                                 };
+
+                                int statusCode = obj.statusCode;
+                                string stringStatus = statusCode.ToString();
+                                string previousStatus = InMemoryDeviceStateStorage.GetDeviceState(deviceName);
+                                
+                                if (previousStatus != stringStatus)
+                                {
+                                    
+                                    var msg = new DeviceMessage(deviceName).WithDeviceState(stringStatus);
+
+                                    try
+                                    {
+                                        _fiwareContextBroker.PostMessage(msg);
+                                        InMemoryDeviceStateStorage.StoreDeviceState(deviceName, stringStatus);
+                                    } 
+                                    catch (Exception e) 
+                                    {
+                                        Console.WriteLine($"Exception caught attempting to post Device update: {e.Message}");
+                                    };
+                                }
                             }
                             else
                             {
@@ -224,7 +241,7 @@ namespace Masarin.IoT.Sensor
                             double snrLevel = Math.Round((snr + 20.0) / 32.0, 2);
                             snrLevel = Math.Min(Math.Max(0, snrLevel), 1.0);
 
-                            var msg = new Fiware.DeviceMessage(deviceName).WithRSSI(rssiLevel).WithSNR(snrLevel);
+                            var msg = new DeviceMessage(deviceName).WithRSSI(rssiLevel).WithSNR(snrLevel);
                             try
                             {
                                 _fiwareContextBroker.PostMessage(msg);
@@ -241,7 +258,7 @@ namespace Masarin.IoT.Sensor
                     if (data.externalPowerSource == false && data.batteryLevelUnavailable == false)
                     {
                         double batteryLevel = data.batteryLevel / 100.0;
-                        var msg = new Fiware.DeviceMessage(deviceName).WithVoltage(Math.Round(batteryLevel, 2));
+                        var msg = new DeviceMessage(deviceName).WithVoltage(Math.Round(batteryLevel, 2));
                         try
                         {
                             _fiwareContextBroker.PostMessage(msg);
@@ -263,7 +280,7 @@ namespace Masarin.IoT.Sensor
             string shortDeviceName = $"{deviceName}:{lane}:{dateStr}";
             
             if (intensity > 0) {
-                var tfo = new Fiware.TrafficFlowObserved(shortDeviceName, dateStr, lane, intensity, refRoad);
+                var tfo = new TrafficFlowObserved(shortDeviceName, dateStr, lane, intensity, refRoad);
                 tfo.AverageVehicleSpeed = new NumberPropertyFromDouble(averageSpeed);
 
                 try {

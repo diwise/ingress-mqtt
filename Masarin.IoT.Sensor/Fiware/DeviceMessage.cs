@@ -6,6 +6,8 @@
             public string Type { get; }
             public TextProperty Value { get; }
 
+            public TextProperty DeviceState { get; set; }
+
             public NumberPropertyFromDouble BatteryLevel { get; set; }
             public NumberPropertyFromDouble RSSI { get; set; }
             public NumberPropertyFromDouble SNR { get; set; }
@@ -37,6 +39,12 @@
             public DeviceMessage WithSNR(double snr)
             {
                 SNR = new NumberPropertyFromDouble(snr);
+                return this;
+            }
+
+            public DeviceMessage WithDeviceState(string state)
+            {
+                DeviceState = new TextProperty(state);
                 return this;
             }
         }
