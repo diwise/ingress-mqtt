@@ -192,13 +192,13 @@ namespace Masarin.IoT.Sensor
                                 
                                 if (previousStatus != stringStatus)
                                 {
-                                    InMemoryDeviceStateStorage.StoreDeviceState(deviceName, stringStatus);
                                     
                                     var msg = new DeviceMessage(deviceName).WithDeviceState(stringStatus);
 
                                     try
                                     {
                                         _fiwareContextBroker.PostMessage(msg);
+                                        InMemoryDeviceStateStorage.StoreDeviceState(deviceName, stringStatus);
                                     } 
                                     catch (Exception e) 
                                     {
