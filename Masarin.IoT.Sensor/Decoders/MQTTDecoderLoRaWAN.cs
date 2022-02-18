@@ -190,10 +190,10 @@ namespace Masarin.IoT.Sensor
                                 string stringStatus = statusCode.ToString();
                                 string previousStatus = InMemoryDeviceStateStorage.GetDeviceState(deviceName);
                                 
-                                if (previousStatus == string.Empty)
+                                if (previousStatus != stringStatus)
                                 {
                                     InMemoryDeviceStateStorage.StoreDeviceState(deviceName, stringStatus);
-                                } else if (previousStatus != stringStatus) {
+                                    
                                     var msg = new DeviceMessage(deviceName).WithDeviceState(stringStatus);
 
                                     try
