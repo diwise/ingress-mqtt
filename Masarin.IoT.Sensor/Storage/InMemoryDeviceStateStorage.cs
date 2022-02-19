@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Masarin.IoT.Sensor.Extensions;
 
 namespace Storage
 {
@@ -7,10 +8,7 @@ namespace Storage
         private static Dictionary<string, string> _deviceStates = new Dictionary<string, string>();
         public static void StoreDeviceState(string deviceName, string state)
         {
-            if(!_deviceStates.TryAdd(deviceName, state))
-            {
-                _deviceStates[deviceName] = state;
-            }
+            _deviceStates.AddOrUpdate(deviceName, state);
         }
         public static string GetDeviceState(string deviceName) 
         {
