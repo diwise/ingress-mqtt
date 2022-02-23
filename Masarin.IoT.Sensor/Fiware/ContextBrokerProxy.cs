@@ -26,7 +26,7 @@ namespace Fiware
 
             var json = JsonConvert.SerializeObject(message, settings);
 
-            var data = new StringContent(json, Encoding.UTF8, "application/json+ld");
+            var data = new StringContent(json, Encoding.UTF8, "application/ld+json");
 
             var url = $"{_contextBrokerURL}/ngsi-ld/v1/entities/{message.Id}/attrs/";
 
@@ -43,7 +43,7 @@ namespace Fiware
 
             var json = JsonConvert.SerializeObject(entity, settings);
 
-            var data = new StringContent(json, Encoding.UTF8, "application/json+ld");
+            var data = new StringContent(json, Encoding.UTF8, "application/ld+json");
 
             var url = $"{_contextBrokerURL}/ngsi-ld/v1/entities";
 
