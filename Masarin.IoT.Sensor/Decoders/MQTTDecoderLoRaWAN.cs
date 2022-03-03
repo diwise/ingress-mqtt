@@ -215,42 +215,21 @@ namespace Masarin.IoT.Sensor
 
                     if (data.ContainsKey("rxInfo"))
                     {
-                        dynamic rxInfo = data["rxInfo"];
-                        if (rxInfo.Count > 0)
+                        double snrLevel;
+                        double rssiLevel;
+
+                        FindSNRAndRSSI(deviceName, data, out snrLevel, out rssiLevel);
+
+                        var devMsg = new Fiware.DeviceMessage(deviceName).WithSNR(snrLevel).WithRSSI(rssiLevel);
+                        
+                        try
                         {
-                            dynamic gateway = rxInfo[0];
-                            int maxRSSI = gateway.rssi;
-                            int snr = gateway.loRaSNR;
-                            string name = gateway.name;
-
-                            for (int i = 1; i < rxInfo.Count; i++)
-                            {
-                                if (rxInfo[i].rssi > maxRSSI)
-                                {
-                                    maxRSSI = rxInfo[i].rssi;
-                                    snr = gateway.loRaSNR;
-                                    name = rxInfo[i].name;
-                                }
-                            }
-
-                            Console.WriteLine($"{deviceName} is connected to gateway {name} with rssi {maxRSSI} and snr {snr}");
-
-                            double rssiLevel = Math.Round((125.0 - Math.Abs(maxRSSI)) / 100.0, 2);
-                            rssiLevel = Math.Min(Math.Max(0, rssiLevel), 1.0); // RSSI level should be in range [0 1]
-
-                            double snrLevel = Math.Round((snr + 20.0) / 32.0, 2);
-                            snrLevel = Math.Min(Math.Max(0, snrLevel), 1.0);
-
-                            var msg = new DeviceMessage(deviceName).WithRSSI(rssiLevel).WithSNR(snrLevel);
-                            try
-                            {
-                                _fiwareContextBroker.PostMessage(msg);
-                            }
-                            catch (Exception e) 
-                            {
-                                Console.WriteLine($"Exception caught attempting to post Device update: {e.Message}");
-                            };
-                        }
+                            _fiwareContextBroker.PostMessage(devMsg);
+                        } 
+                        catch (Exception e) 
+                        {
+                            Console.WriteLine($"Exception caught attempting to post Device update: {e.Message}");
+                        };
                     }
                 }
                 else if (topic == "/event/status")
@@ -268,6 +247,59 @@ namespace Masarin.IoT.Sensor
                             Console.WriteLine($"Exception caught attempting to post Device update: {e.Message}");
                         };
                     }
+                }
+            } else if (data.ContainsKey("applicationName") && (data.applicationName == "POC-SC-IT")) 
+            {
+                if (topic == "/event/up") 
+                {
+                    var aqo = new AirQualityObserved(deviceName, dateStrNow);
+                    if (obj.ContainsKey("co2"))
+                    {
+                        double co2 = obj.co2;
+                        aqo.WithCO2(co2);
+                    }
+
+                    if (obj.ContainsKey("humidity")) 
+                    {
+                        double humidity = obj.humidity;
+                        aqo.WithHumidity(humidity);
+                    }
+
+                    if (obj.ContainsKey("temperature"))
+                    {
+                        double temperature = obj.temperature;
+                        aqo.WithTemperature(temperature);
+                    }
+
+                    var deviceMsg = new DeviceMessage(deviceName);
+
+                    if (obj.ContainsKey("vdd"))
+                    {
+                        double batteryLevel = obj.vdd;
+                        batteryLevel = batteryLevel / 3665.0;
+                        deviceMsg = deviceMsg.WithVoltage(Math.Round(batteryLevel, 2));
+                    }
+
+                    if (data.ContainsKey("rxInfo"))
+                    {
+                        double snrLevel;
+                        double rssiLevel;
+
+                        FindSNRAndRSSI(deviceName, data, out snrLevel, out rssiLevel);
+
+                        deviceMsg.WithSNR(snrLevel).WithRSSI(rssiLevel);
+                    }
+
+                    try
+                    {
+                        _fiwareContextBroker.CreateNewEntity(aqo);
+                        _fiwareContextBroker.PostMessage(deviceMsg);
+                    } 
+                    catch (Exception e) 
+                    {
+                        Console.WriteLine($"Exception caught attempting to post Device update: {e.Message}");
+                    };
+                    
                 }
             }
 
@@ -289,6 +321,39 @@ namespace Masarin.IoT.Sensor
                 {
                     Console.WriteLine($"Exception caught attempting to post TrafficFlowObserved: {e.Message}");
                 };
+            }
+        }
+
+        private void FindSNRAndRSSI(string deviceName, dynamic data, out double snrLevel, out double rssiLevel)
+        {
+            snrLevel = 0;
+            rssiLevel = 0;
+
+            dynamic rxInfo = data["rxInfo"];
+            if (rxInfo.Count > 0)
+            {
+                dynamic gateway = rxInfo[0];
+                int maxRSSI = gateway.rssi;
+                int snr = gateway.loRaSNR;
+                string name = gateway.name;
+
+                for (int i = 1; i < rxInfo.Count; i++)
+                {
+                    if (rxInfo[i].rssi > maxRSSI)
+                    {
+                        maxRSSI = rxInfo[i].rssi;
+                        snr = gateway.loRaSNR;
+                        name = rxInfo[i].name;
+                    }
+                }
+
+                Console.WriteLine($"{deviceName} is connected to gateway {name} with rssi {maxRSSI} and snr {snr}");
+
+                rssiLevel = Math.Round((125.0 - Math.Abs(maxRSSI)) / 100.0, 2);
+                rssiLevel = Math.Min(Math.Max(0, rssiLevel), 1.0); // RSSI level should be in range [0 1]
+
+                snrLevel = Math.Round((snr + 20.0) / 32.0, 2);
+                snrLevel = Math.Min(Math.Max(0, snrLevel), 1.0);
             }
         }
     }

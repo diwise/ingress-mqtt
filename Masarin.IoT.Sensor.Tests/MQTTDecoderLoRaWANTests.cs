@@ -65,7 +65,6 @@ namespace Masarin.IoT.Sensor.Tests
             var payload = "{\"deviceName\":\"mcg-ers-co2-01\",\"devEUI\":\"xxxxxxxxxxxxxxx\",\"data\":\"AQDlAiUEAO8FAAYBwQcOBQ==\",\"object\":{\"co2\":449,\"humidity\":37,\"light\":239,\"motion\":0,\"temperature\":22.9,\"vdd\":3589}}";
             decoder.Decode("2020-10-07T15:46:45Z", "iothub", "out", Encoding.UTF8.GetBytes(payload));
 
-            
             contextBroker.Verify(foo => foo.PostMessage(It.IsAny<DeviceMessage>()), Times.Once());
             contextBroker.Verify(foo => foo.CreateNewEntity(It.IsAny<AirQualityObserved>()), Times.Once());
         }
@@ -119,6 +118,19 @@ namespace Masarin.IoT.Sensor.Tests
             contextBroker.Verify(foo => foo.CreateNewEntity(It.IsAny<WaterConsumptionObserved>()), Times.Once());
 
             contextBroker.Verify(foo => foo.PostMessage(It.IsAny<DeviceMessage>()), Times.Exactly(1));
+        }
+
+        [Fact]
+        public void TestThatApplicationNamePOCSCITCanBeDecoded()
+        {
+            var contextBroker = new Mock<IContextBrokerProxy>();
+            var decoder = new MQTTDecoderLoRaWAN(contextBroker.Object);
+            var payload = "{\"applicationID\":\"53\",\"applicationName\":\"POC-SC-IT\",\"deviceName\":\"Elsys_ERS_1\",\"deviceProfileName\":\"Elsys_codec\",\"deviceProfileID\":\"xxxxxxxx\",\"devEUI\":\"xxxxxxxxxx\",\"rxInfo\":[{\"gatewayID\":\"xxxxxxx\",\"uplinkID\":\"xxxxxxxxxx\",\"name\":\"SN-LGW-001\",\"time\":\"2022-03-02T15:11:31.341018046Z\",\"rssi\":-110,\"loRaSNR\":-9.5,\"location\":{\"latitude\":62.39466886148298,\"longitude\":17.34076023101807,\"altitude\":0}}],\"txInfo\":{\"frequency\":867700000,\"dr\":1},\"adr\":true,\"fCnt\":14843,\"fPort\":5,\"data\":\"AQDVAhYEABoFAAcOMT0GAQAA\",\"object\":{\"humidity\":22,\"light\":26,\"motion\":0,\"temperature\":21.3,\"vdd\":3633},\"tags\":{\"place\":\"utesupport\"}}";
+            decoder.Decode("2022-03-02T16:26:30Z", "a81758fffe06bfa3", "/event/up", Encoding.UTF8.GetBytes(payload));
+
+            contextBroker.Verify(foo => foo.CreateNewEntity(It.IsAny<AirQualityObserved>()), Times.Once());
+
+            contextBroker.Verify(foo => foo.PostMessage(It.IsAny<DeviceMessage>()), Times.Once());
         }
     }
 }
