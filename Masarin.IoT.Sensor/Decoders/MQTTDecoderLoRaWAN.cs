@@ -56,7 +56,7 @@ namespace Masarin.IoT.Sensor
                     Console.WriteLine($"No \"present\" property in message from deviceName {deviceName}!: {json}");
                     return;
                 }
-            } 
+            }
             else if (deviceName.Contains("sk-elt-temp-"))
             {
                 if (obj.ContainsKey("externalTemperature"))
@@ -218,15 +218,15 @@ namespace Masarin.IoT.Sensor
                         double snrLevel;
                         double rssiLevel;
 
-                        FindSNRAndRSSI(deviceName, data, out snrLevel, out rssiLevel);
+                        FindSNRAndRSSI(data, out snrLevel, out rssiLevel);
 
                         var devMsg = new Fiware.DeviceMessage(deviceName).WithSNR(snrLevel).WithRSSI(rssiLevel);
                         
                         try
                         {
                             _fiwareContextBroker.PostMessage(devMsg);
-                        } 
-                        catch (Exception e) 
+                        }
+                        catch (Exception e)
                         {
                             Console.WriteLine($"Exception caught attempting to post Device update: {e.Message}");
                         };
@@ -285,7 +285,7 @@ namespace Masarin.IoT.Sensor
                         double snrLevel;
                         double rssiLevel;
 
-                        FindSNRAndRSSI(deviceName, data, out snrLevel, out rssiLevel);
+                        FindSNRAndRSSI(data, out snrLevel, out rssiLevel);
 
                         deviceMsg.WithSNR(snrLevel).WithRSSI(rssiLevel);
                     }
@@ -299,7 +299,6 @@ namespace Masarin.IoT.Sensor
                     {
                         Console.WriteLine($"Exception caught attempting to post Device update: {e.Message}");
                     };
-                    
                 }
             }
 
@@ -317,14 +316,15 @@ namespace Masarin.IoT.Sensor
 
                 try {
                     _fiwareContextBroker.CreateNewEntity(tfo);
-                } catch (Exception e) 
+                } 
+                catch (Exception e) 
                 {
                     Console.WriteLine($"Exception caught attempting to post TrafficFlowObserved: {e.Message}");
                 };
             }
         }
 
-        private void FindSNRAndRSSI(string deviceName, dynamic data, out double snrLevel, out double rssiLevel)
+        private void FindSNRAndRSSI(dynamic data, out double snrLevel, out double rssiLevel)
         {
             snrLevel = 0;
             rssiLevel = 0;
@@ -346,8 +346,6 @@ namespace Masarin.IoT.Sensor
                         name = rxInfo[i].name;
                     }
                 }
-
-                Console.WriteLine($"{deviceName} is connected to gateway {name} with rssi {maxRSSI} and snr {snr}");
 
                 rssiLevel = Math.Round((125.0 - Math.Abs(maxRSSI)) / 100.0, 2);
                 rssiLevel = Math.Min(Math.Max(0, rssiLevel), 1.0); // RSSI level should be in range [0 1]
