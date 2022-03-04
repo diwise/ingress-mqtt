@@ -248,7 +248,7 @@ namespace Masarin.IoT.Sensor
                         };
                     }
                 }
-            } else if (data.ContainsKey("applicationName") && (data.applicationName == "POC-SC-IT")) 
+            } else if (data.ContainsKey("applicationName") && (data.applicationName == "POC-SC-IT") && (deviceName.Contains("Elsys_"))) 
             {
                 if (topic == "/event/up") 
                 {
@@ -294,12 +294,15 @@ namespace Masarin.IoT.Sensor
                     {
                         _fiwareContextBroker.CreateNewEntity(aqo);
                         _fiwareContextBroker.PostMessage(deviceMsg);
-                    } 
+                    }
                     catch (Exception e) 
                     {
                         Console.WriteLine($"Exception caught attempting to post Device update: {e.Message}");
                     };
                 }
+            } else if (data.ContainsKey("applicationName") && (data.applicationName == "POC-SC-IT") && (deviceName.Contains("Sensative_")))
+            {
+                Console.WriteLine("support for this type of device will be added asap");
             }
 
             Console.WriteLine($"Got message from {deviceName} on topic {topic}: {json}");
