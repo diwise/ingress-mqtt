@@ -132,5 +132,16 @@ namespace Masarin.IoT.Sensor.Tests
 
             contextBroker.Verify(foo => foo.PostMessage(It.IsAny<DeviceMessage>()), Times.Once());
         }
+
+        [Fact]
+        public void TestThatDeviceNameSensativeCanBeDecoded()
+        {
+            var contextBroker = new Mock<IContextBrokerProxy>();
+            var decoder = new MQTTDecoderLoRaWAN(contextBroker.Object);
+            const string payload = @"{""applicationID"":""53"",""applicationName"":""POC-SC-IT"",""deviceName"":""Sensative_2"",""deviceProfileName"":""Sensative_Codec"",""deviceProfileID"":""xxxxxxx"",""devEUI"":""xxxxxxxx"",""rxInfo"":[{""gatewayID"":""xxxxxxxx"",""uplinkID"":""xxxxxxxx"",""name"":""SN-LGW-047"",""time"":""2022-03-04T08:24:47.565902201Z"",""rssi"":-118,""loRaSNR"":-7.8,""location"":{""latitude"":62.36956091265246,""longitude"":17.319844410529534,""altitude"":0}},{""gatewayID"":""xxxxxxxx"",""uplinkID"":""xxxxxxxxxx"",""name"":""SN-LGW-001"",""time"":""2022-03-04T08:24:47.540492591Z"",""rssi"":-112,""loRaSNR"":-7.2,""location"":{""latitude"":62.39466886148298,""longitude"":17.34076023101807,""altitude"":0}}],""txInfo"":{""frequency"":867700000,""dr"":3},""adr"":true,""fCnt"":303,""fPort"":1,""data"":""//8SAQ=="",""object"":{""historySeqNr"":65535,""presence"":{""value"":true},""prevHistSeqNr"":65535}}";
+            decoder.Decode("2022-03-02T16:26:30Z", "70b3d52c0001ad18", "/event/up", Encoding.UTF8.GetBytes(payload));
+
+            contextBroker.Verify(foo => foo.PostMessage(It.IsAny<DeviceMessage>()), Times.Once());
+        }
     }
 }

@@ -302,7 +302,35 @@ namespace Masarin.IoT.Sensor
                 }
             } else if (data.ContainsKey("applicationName") && (data.applicationName == "POC-SC-IT") && (deviceName.Contains("Sensative_")))
             {
-                Console.WriteLine("support for this type of device will be added asap");
+                if (topic == "/event/up")
+                {
+                     var value =  "";
+                    if (obj.ContainsKey("presence"))
+                    {
+                        value = obj.presence.value;
+                    
+                    } else if (obj.Contains("buildId")) 
+                    {
+                        value = obj.buildId.modified;
+                    } else if (obj.ContainsKey("closeProximityAlarm"))
+                    {
+                        value = obj.closeProximityAlarm.value;
+                    }
+
+                    if (value != "") 
+                    {
+                        var sensDev = new DeviceMessage(deviceName, value);
+
+                        try
+                        {
+                            _fiwareContextBroker.PostMessage(sensDev);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine($"Exception caught attempting to post Device update: {e.Message}");
+                        }
+                    }
+                }
             }
 
             Console.WriteLine($"Got message from {deviceName} on topic {topic}: {json}");
