@@ -308,7 +308,6 @@ namespace Masarin.IoT.Sensor
                     if (obj.ContainsKey("presence"))
                     {
                         value = obj.presence.value;
-                    
                     } else if (obj.ContainsKey("closeProximityAlarm"))
                     {
                         value = obj.closeProximityAlarm.value;
@@ -323,7 +322,6 @@ namespace Masarin.IoT.Sensor
                         {
                             value = "off";
                         }
-
 
                         var sensDev = new DeviceMessage(deviceName, value);
 
