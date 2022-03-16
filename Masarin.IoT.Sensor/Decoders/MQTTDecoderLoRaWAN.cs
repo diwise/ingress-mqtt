@@ -304,14 +304,11 @@ namespace Masarin.IoT.Sensor
             {
                 if (topic == "/event/up")
                 {
-                     var value =  "";
+                    var value = "";
                     if (obj.ContainsKey("presence"))
                     {
                         value = obj.presence.value;
                     
-                    } else if (obj.Contains("buildId")) 
-                    {
-                        value = obj.buildId.modified;
                     } else if (obj.ContainsKey("closeProximityAlarm"))
                     {
                         value = obj.closeProximityAlarm.value;
@@ -319,6 +316,15 @@ namespace Masarin.IoT.Sensor
 
                     if (value != "") 
                     {
+                        if (value == "true")
+                        {
+                            value = "on";
+                        } else if (value == "false")
+                        {
+                            value = "off";
+                        }
+
+
                         var sensDev = new DeviceMessage(deviceName, value);
 
                         try
